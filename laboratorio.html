@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Renzo · laboratório das formas</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #070707; color: #f2f0ea; font: 13px/1.4 ui-monospace, monospace; }
+    canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+    .nomes { position: fixed; left: 0; right: 0; bottom: 14px; display: flex; justify-content: space-around; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.08em; }
+    .dica { position: fixed; left: 16px; top: 14px; opacity: 0.55; }
+  </style>
+</head>
+<body>
+  <!-- Página de trabalho (não entra no build): todas as formas da peça lado a lado.
+       ?forma=2 mostra uma só, grande. ?mix=0,2,0.5 mostra a troca parada no meio. ?fundo=f01810 troca o fundo.
+       ?gx=20&gy=-30 fixa o giro. Sem parâmetro de giro, a peça segue o mouse. -->
+  <canvas></canvas>
+  <p class="dica"></p>
+  <div class="nomes"></div>
+  <script type="module">
+    import { criarPeca, quat } from './src/gl/peca.js';
+    import { FORMAS } from './src/gl/formas.js';
+    import { POSES } from './src/gl/poses.js';
+    const q = new URLSearchParams(location.search);
+    if (q.get('fundo')) document.body.style.background = document.documentElement.style.background = '#' + q.get('fundo');
+    const canvas = document.querySelector('canvas');
+    const peca = criarPeca(canvas);
+    if (q.get('halo')) peca.material.halo = [1, 1, 1, Number(q.get('halo'))];
+    if (q.get('contra')) { const h = q.get('contra'); peca.material.contra = [0, 2, 4].map((i) => (parseInt(h.slice(i, i + 2), 16) / 255) ** 2.2); }
+    const uma = q.has('forma') ? Number(q.get('forma')) : -1;
+    const mix = q.get('mix')?.split(',').map(Number);
+    const fixo = q.has('gx') || q.has('gy');
+    let mx = 0, my = 0;
+    addEventListener('pointermove', (e) => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; });
+    const medir = () => peca.medir(innerWidth, innerHeight);
+    addEventListener('resize', medir); medir();
+    document.querySelector('.dica').textContent = uma >= 0 ? FORMAS[uma] : mix ? `${FORMAS[mix[0]]} → ${FORMAS[mix[1]]} (${mix[2]})` : 'as formas da peça';
+    if (uma < 0 && !mix) document.querySelector('.nomes').innerHTML = FORMAS.map((n) => `<span>${n}</span>`).join('');
+    const rot = new Float32Array(9);
+    function quadro(t) {
+      const s = t / 1000;
+      const giro = fixo ? quat.deEuler(Number(q.get('gx') || 0), Number(q.get('gy') || 0), Number(q.get('gz') || 0))
+        : quat.deEuler(my * 70 + Math.sin(s * 0.6) * 6, mx * 110 + Math.sin(s * 0.45) * 14, 0);
+      const itens = [];
+      const lista = uma >= 0 ? [uma] : mix ? [mix[0]] : FORMAS.map((_, i) => i);
+      const n = lista.length;
+      lista.forEach((id, i) => {
+        const pose = quat.mul(giro, POSES[id]);
+        const raio = n === 1 ? Math.min(innerWidth, innerHeight) * 0.36 : Math.min(innerWidth / n * 0.4, innerHeight * 0.3);
+        itens.push({
+          x: innerWidth * (i + 0.5) / n, y: innerHeight * 0.48, raio, rot: quat.matriz(pose, new Float32Array(9)),
+          formas: mix ? [mix[0], mix[1], 0] : [id, 0, 0], pesos: mix ? [1 - mix[2], mix[2], 0] : [1, 0, 0],
+          agito: mix ? Math.sin(Math.PI * mix[2]) : 0, alfa: 1,
+        });
+      });
+      peca.desenhar(itens, s);
+      requestAnimationFrame(quadro);
+    }
+    requestAnimationFrame(quadro);
+    window.__pronto = true;
+  </script>
+</body>
+</html>
