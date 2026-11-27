@@ -71,12 +71,15 @@ ol, ul { list-style: none; }
 }
 .peca.is-pronta { opacity: 1; }
 
-/* aquecer (motion/aquecer.js): uma cópia minúscula e quase transparente das fotos, por um instante, no canto */
+/* aquecer (motion/aquecer.js): uma cópia pequena das fotos e da lista dos planos, por um instante, no canto, em
+   0,2% de opacidade (em 1%, o texto claro da lista ainda se via sobre o fundo preto). Sem recorte na caixa: desenhar
+   sob recorte é outro programa na GPU, e a lista dos planos não tem recorte no lugar dela (as fotos têm o próprio,
+   no .foto__quadro) */
 .aquecer {
-  position: fixed; left: 0; top: 0; z-index: 30; width: 6px; height: 6px; display: flex;
-  overflow: hidden; opacity: 0.01; pointer-events: none;
+  position: fixed; left: 0; top: 0; z-index: 30; display: flex; align-items: flex-start;
+  opacity: 0.002; pointer-events: none;
 }
-.aquecer > * { flex: none; width: 6px; }
+.aquecer > * { flex: none; width: 40px; margin: 0; }
 
 /* link para pular a navegação (aparece só no foco do teclado) */
 .pular {
