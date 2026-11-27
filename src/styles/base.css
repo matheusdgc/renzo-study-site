@@ -71,6 +71,13 @@ ol, ul { list-style: none; }
 }
 .peca.is-pronta { opacity: 1; }
 
+/* aquecer (motion/aquecer.js): uma cópia minúscula e quase transparente das fotos, por um instante, no canto */
+.aquecer {
+  position: fixed; left: 0; top: 0; z-index: 30; width: 6px; height: 6px; display: flex;
+  overflow: hidden; opacity: 0.01; pointer-events: none;
+}
+.aquecer > * { flex: none; width: 6px; }
+
 /* link para pular a navegação (aparece só no foco do teclado) */
 .pular {
   position: fixed; left: 12px; top: 12px; z-index: 100; padding: 10px 16px;

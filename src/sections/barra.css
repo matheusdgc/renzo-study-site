@@ -3,10 +3,13 @@
   position: fixed; top: 0; left: 0; right: 0; z-index: 20;
   height: var(--barra); display: flex; align-items: center; gap: 30px; padding: 0 var(--margem);
 }
+/* o fundo nunca fica em opacidade 0, só em 0,01 (invisível): assim o blur é desenhado desde o primeiro quadro, e a
+   GPU compila o programa dele com a página parada. Em 0, a primeira vez do blur caía na entrada das modalidades
+   e engasgava um quadro de até 100 ms (motion/aquecer.js explica). */
 .barra::before {
   content: ''; position: absolute; inset: 0; z-index: -1;
   background: color-mix(in srgb, var(--fundo) 86%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  box-shadow: 0 1px 0 var(--fio); opacity: 0; transition: opacity 0.45s linear;
+  box-shadow: 0 1px 0 var(--fio); opacity: 0.01; transition: opacity 0.45s linear;
 }
 .barra.is-solta::before, html:not(.js) .barra::before { opacity: 1; }
 .barra__marca {
@@ -17,11 +20,16 @@
 .barra__o { width: 0.74em; height: 0.74em; transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .barra__links { display: flex; gap: 26px; }
 .barra__links a { position: relative; padding: 10px 0; font-size: 14px; font-weight: 500; line-height: 1; }
+/* o sublinhado não descansa em 0: descansa num fio mínimo, na cor do fundo e numa camada própria, para ficar
+   desenhado desde o primeiro quadro, pelo mesmo motivo do blur acima (em 0, a primeira troca de link engasgava um
+   quadro de ~40 ms). Na cor da letra, a borda suavizada do fio deixaria um ponto; por isso a cor só vira a da letra
+   quando ele abre, e só volta para a do fundo depois que ele termina de recolher (o atraso de 0,45 s). */
 .barra__links a::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: 3px; height: 1.5px; background: currentColor;
-  transform: scaleX(0); transform-origin: 100% 50%; transition: transform 0.45s var(--entra);
+  content: ''; position: absolute; left: 0; right: 0; bottom: 3px; height: 1.5px; background: var(--fundo);
+  transform: scaleX(0.0001); transform-origin: 100% 50%; will-change: transform;
+  transition: transform 0.45s var(--entra), background-color 0s linear 0.45s;
 }
-.barra__links a.is-atual::after { transform: scaleX(1); transform-origin: 0 50%; }
+.barra__links a.is-atual::after { background: currentColor; transform: scaleX(1); transform-origin: 0 50%; transition: transform 0.45s var(--entra); }
 .barra__cta {
   position: relative; isolation: isolate; overflow: hidden;
   display: inline-flex; align-items: center; height: 40px; padding: 0 16px;
@@ -35,7 +43,7 @@
 .barra__cta:active { transform: scale(0.97); }
 @media (hover: hover) {
   html:not(.is-scrolling) .barra__marca:hover .barra__o { transform: translateY(-5px) scale(1.12); }
-  html:not(.is-scrolling) .barra__links a:hover::after { transform: scaleX(1); transform-origin: 0 50%; }
+  html:not(.is-scrolling) .barra__links a:hover::after { background: currentColor; transform: scaleX(1); transform-origin: 0 50%; transition: transform 0.45s var(--entra); }
   html:not(.is-scrolling) .barra__cta:hover { color: var(--sobre-acento); }
   html:not(.is-scrolling) .barra__cta:hover::before { transform: none; }
 }

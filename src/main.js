@@ -13,6 +13,7 @@ import { horarios } from './motion/horarios.js';
 import { duvidas } from './motion/duvidas.js';
 import { contato } from './motion/contato.js';
 import { criarPercurso } from './motion/percurso.js';
+import { aquecer } from './motion/aquecer.js';
 
 const html = document.documentElement;
 const canvas = document.querySelector('.peca');
@@ -69,6 +70,9 @@ fontes.then(() => {
   requestAnimationFrame(quadro);
   requestAnimationFrame(() => canvas.classList.add('is-pronta'));
   window.__renzo = { percurso, lenis };
+  // depois da abertura (a anilha leva 1,5 s para entrar), com o navegador folgado
+  const folga = window.requestIdleCallback || ((f) => setTimeout(f, 1));
+  setTimeout(() => folga(aquecer, { timeout: 1000 }), 1700);
 });
 
 // a página mudou de tamanho (janela, fonte que chegou, pergunta aberta): mede de novo no quadro seguinte
